@@ -19,9 +19,6 @@ if mountpoint -q "$MPOINT"; then
 else
   echo "Mounting $MPOINT"
 
-## Adjust chunk-check/load threads to match maximum concurrent streams
-## Do not use losd-ahead bigger then 10.
-## Keep in mind that 1080p stream will need 20Mbit while some scenes can spike to 50/60Mbit.
 rclone mount $REMOTE "$MPOINT" \
   --allow-other \
   --read-only \
