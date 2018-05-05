@@ -13,12 +13,8 @@ function _mountpoint() {
 
 function _unmount() {
   echo "Unmounting $REMOTE from $MPOINT"
-  fusermount -uz "$MPOINT"
-}
-
-function _purge() {
-  echo "Purging cache"
-  $(_cachemount) --cache-db-purge
+  fusermount -uz "$MPOINT" \
+    &>>"$LOGFILE" &
 }
 
 function _install() {
@@ -28,14 +24,14 @@ function _install() {
 function _mountif() {
   ## CHECK IF MOUNT ALREADY EXIST AND MOUNT IF NOT
   if mountpoint -q "$MPOINT"; then
-    echo "$MPOINT already mounted"
-  else
-    echo "Mounting $MPOINT"
+    echo "$MPOINT already mounted" \
+      else
+    echo "Mounting $REMOTE to $MPOINT"
+    exit
   fi
 }
 
 function _normalmount() {
-  echo "Mounting $REMOTE to $MPOINT"
   local rcloneARGS=(
     "--allow-other"
     "--buffer-size=128M"
@@ -47,7 +43,6 @@ function _normalmount() {
 }
 
 function _cachemount() {
-  echo "Mounting $REMOTE to $MPOINT"
   local rclonecacheARGS=(
     "--cache-tmp-upload-path=$HOME/.cache/rclone/cache-backend"
     "--cache-chunk-path=$HOME/.cache/rclone/cache-backend"
@@ -62,7 +57,8 @@ function _cachemount() {
     "--cache-tmp-wait-time=10s")
   local rcloneARGS=(
     "--allow-other"
-    "--buffer-size=128M"
+    "--fuse-flag=sync_read"
+    "--buffer-size=0"
     "--attr-timeout=10s"
     "--timeout=5s"
     "--max-read-ahead=1M"
@@ -77,8 +73,21 @@ function _cachemount() {
     "--contimeout=5s"
     "--stats=10s"
   )
-  rclone mount $REMOTE "$MPOINT" "${rcloneARGS[@]}" "${rclonecacheARGS[@]}" \
+  rclone mount $REMOTE "$MPOINT" "${rcloneARGS[@]}" "${rclonecacheARGS[@]}" "$1" \
     &>>"$LOGFILE" &
+}
+
+function _purge() {
+  if mountpoint -q "$MPOINT"; then
+    echo "Purging cache"
+    killall -SIGHUP rclone \
+      &>>"$LOGFILE" &
+  else
+    echo "Purging cache"
+    $(_cachemount "--cache-db-purge")
+    sleep 10
+    _unmount
+  fi
 }
 
 function _mountbundle() {
@@ -117,7 +126,7 @@ while [ ! $# -eq 0 ]; do
     exit 0
     ;;
   -m | --mount)
-    _mountbundle "$@"
+    _mountbundle
     exit 0
     ;;
   -u | --unmount)
@@ -125,7 +134,7 @@ while [ ! $# -eq 0 ]; do
     exit 0
     ;;
   -c | --cache)
-    _mountcachebundle "$@"
+    _mountcachebundle
     exit 0
     ;;
   -i | --install)
@@ -133,7 +142,7 @@ while [ ! $# -eq 0 ]; do
     exit 0
     ;;
   *)
-    hlp
+    _hlp
     exit 0
     ;;
   esac
