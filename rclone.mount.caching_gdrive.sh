@@ -46,29 +46,30 @@ function _cachemount() {
   local rclonecacheARGS=(
     "--cache-tmp-upload-path=$HOME/.cache/rclone/cache-backend"
     "--cache-chunk-path=$HOME/.cache/rclone/cache-backend"
-    "--cache-chunk-size=16M"
+    "--cache-chunk-size=1M"
     "--cache-total-chunk-size=100G"
     "--cache-chunk-clean-interval=1m"
     "--cache-info-age=12h"
     "--cache-read-retries=10"
-    "--cache-workers=8"
+    "--cache-workers=20"
     "--cache-db-path=$HOME/.cache/rclone/cache-backend"
     "--cache-writes"
-    "--cache-tmp-wait-time=10s")
+    "--cache-tmp-wait-time=10s"
+    )
   local rcloneARGS=(
     "--allow-other"
-    "--fuse-flag=sync_read"
-    "--buffer-size=0"
+#    "--fuse-flag=sync_read"
+    "--buffer-size=256"
     "--attr-timeout=10s"
     "--timeout=5s"
     "--max-read-ahead=1M"
     "--cache-dir=$HOME/.cache/rclone"
-    "--vfs-cache-max-age=6h"
+#    "--vfs-cache-max-age=6h"
     "--dir-cache-time=5m"
-    "--vfs-cache-mode=full"
-    "-vv"
-    "--vfs-cache-max-age=11h"
-    "--vfs-cache-poll-interval=1m"
+#    "--vfs-cache-mode=writes"
+    "-vvv"
+#    "--vfs-cache-max-age=11h"
+#    "--vfs-cache-poll-interval=1m"
     "--poll-interval=40s"
     "--contimeout=5s"
     "--stats=10s"
@@ -84,7 +85,7 @@ function _purge() {
       &>>"$LOGFILE" &
   else
     echo "Purging cache"
-    $(_cachemount "--cache-db-purge")
+    _cachemount "--cache-db-purge"
     sleep 10
     _unmount
   fi
@@ -99,7 +100,7 @@ function _mountbundle() {
 function _mountcachebundle() {
   _mountpoint
   _mountif
-  _cachemount
+  _cachemount "-vv"
 }
 
 function _hlp() {
