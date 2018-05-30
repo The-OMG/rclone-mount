@@ -6,7 +6,7 @@ MPOINT="$HOME/cloud"
 
 mkdir "$MPOINT" \
 
-## UNMOUNT IF SCRIPT WAS RUN WITH unmount PARAMETER
+  ## UNMOUNT IF SCRIPT WAS RUN WITH unmount PARAMETER
 if [[ $1 == "unmount" ]]; then
   echo "Unmounting $MPOINT"
   fusermount -uz "$MPOINT"
@@ -19,13 +19,13 @@ if mountpoint -q "$MPOINT"; then
 else
   echo "Mounting $MPOINT"
 
-rclone mount $REMOTE "$MPOINT" \
-  --allow-other \
-  --read-only \
-  --buffer-size 128M \
-  --timeout 5s \
-  --contimeout 5s \
-  -vv &>>"$LOGFILE" &
+  rclone mount $REMOTE "$MPOINT" \
+    --allow-other \
+    --read-only \
+    --buffer-size 128M \
+    --timeout 5s \
+    --contimeout 5s \
+    -vv &>>"$LOGFILE" &
 fi
 exit
 /
