@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+# Purpose: Use the latest and greatest version of this app every time.
+
+curl -s https://raw.githubusercontent.com/The-OMG/rclone-mount/master/Linux/rclone_mount.sh | bash /dev/stdin "$1"
