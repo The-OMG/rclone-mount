@@ -165,6 +165,7 @@ _Main() {
         #    "--vfs-cache-poll-interval=1m"
         "--write-back-cache"
       )
+      _unmount
       "$RCLONE" mount "$REMOTE" "$MPOINT" "${rcloneARGS[@]}" "${rclonecacheARGS[@]}" "$@" &&
         echo "Mount Successful" || echo "Mount Failed"
     }
