@@ -22,11 +22,11 @@
 
 _Main() {
     # Global Vars:
-    RCLONE="$HOME/bin/rclone" # Path to rclone. In most cases, it will be in your $PATH so you shouldnt need to change this.
-    REMOTE=":drive:/TV Shows" # Do not change this option. I use the advanced backend options for mounting.
-    TD="0AEFojjZ0gu-9Uk9PVA"   # Your Teamdrive ID. This can be found in the url at the root of your Teamdrive.
-    SA="$HOME/.config/rclone/tokens/Owncloud-5ef5555144cb.json"   # Full path to the service account token for authentication of the Teamdrive.
-    MPOINT="$HOME/cloud/TV Shows/"   # Path to your mount folder.
+    RCLONE="$HOME/bin/rclone"                                   # Path to rclone. In most cases, it will be in your $PATH so you shouldnt need to change this.
+    REMOTE=":drive:/TV Shows"                                   # Do not change this option. I use the advanced backend options for mounting.
+    TD="0AEFojjZ0gu-9Uk9PVA"                                    # Your Teamdrive ID. This can be found in the url at the root of your Teamdrive.
+    SA="$HOME/.config/rclone/tokens/Owncloud-5ef5555144cb.json" # Full path to the service account token for authentication of the Teamdrive.
+    MPOINT="$HOME/cloud/TV Shows/"                              # Path to your mount folder.
 
     ##############################################################################
     # Functions:
