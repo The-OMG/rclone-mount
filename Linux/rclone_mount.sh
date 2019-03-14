@@ -18,22 +18,44 @@
 ################################################################################
 #### rclone credit        : https://github.com/ncw/rclone
 ###  Install rclone       : https://rclone.org/install/
-###  Install rclone       : "brew install rclone"
 
 _Main() {
     # Global Vars:
-    RCLONE="$HOME/bin/rclone"                                   # Path to rclone. In most cases, it will be in your $PATH so you shouldnt need to change this.
-    REMOTE=":drive:/TV Shows"                                   # Do not change this option. I use the advanced backend options for mounting.
-    TD="0AEFojjZ0gu-9Uk9PVA"                                    # Your Teamdrive ID. This can be found in the url at the root of your Teamdrive.
-    SA="$HOME/.config/rclone/tokens/Owncloud-5ef5555144cb.json" # Full path to the service account token for authentication of the Teamdrive.
-    MPOINT="$HOME/cloud/TV Shows/"                              # Path to your mount folder.
+    RCLONE="rclone"                         # Path to rclone. In most cases, it will be in your $PATH so you shouldnt need to change this.
+	FRCLONE="$HOME/bin/rclone"              # Path to 'alternate' rclone.
+    REMOTE=":drive:/Movies"                 # Do not change this option. I use the advanced backend options for mounting.
+    export RCLONE_DRIVE_TEAM_DRIVE="0ABEto_GQCb59PVA"       # Your Teamdrive ID. This can be found in the url at the root of your Teamdrive.
+    MPOINT="$HOME/cloud/Movies/"            # Path to your mount folder.
+    SAKEYS="$HOME/keys/"                    # Path to your service account keys folder
+	
+	# Plex config
+	export RCLONE_CACHE_PLEX_USERNAME="omg"
+	export RCLONE_CACHE_PLEX_PASSWORD="L33tHax0r"
+	export RCLONE_CACHE_PLEX_URL="http://192.168.1.1:12005"
+		
+	# Calculate best chunksize for transfer speed.
+	  AvailableRam=$(free --giga -w | grep Mem | awk '{print $8}')     
+    case "$AvailableRam" in
+    [1-9][0-9] | [1-9][0-9][0-9]) driveChunkSize="1G" ;;
+    [6-9]) driveChunkSize="512M" ;;
+    5) driveChunkSize="256M" ;;
+    4) driveChunkSize="128M" ;;
+    3) driveChunkSize="64M" ;;
+    2) driveChunkSize="32M" ;;
+    [0-1]) driveChunkSize="8M" ;;
+    esac
+	
+	# Rclone ENV - dont change
+	export RCLONE_DRIVE_CHUNK_SIZE="$driveChunkSize"
 
-    ##############################################################################
-    # Functions:
     _MountPoint() { # Create mount location if necessary.
-        echo "Creating Mount Location"
         if [ ! -d "$MPOINT" ]; then
+		echo "Creating Mount Location"
             mkdir -p "$MPOINT"
+        fi
+		if [ ! -d "$$HOME/.config/rclone/tmp_upload_cache-$TD/" ]; then
+            echo "Creating temp cache Location"
+            mkdir -p "$$HOME/.config/rclone/tmp_upload_cache-$TD/"
         fi
     }
 
@@ -45,23 +67,9 @@ _Main() {
     _install() { # Installs the latest rclone via linuxbrew.
         brew install rclone
     }
-    ##############################################################################
-
-    # Calculate best chunksize for transfer speed.
-    AvailableRam=$(free --giga -w | grep Mem | awk '{print $8}')
-    case "$AvailableRam" in
-    [1-9][0-9] | [1-9][0-9][0-9]) driveChunkSize="1G" ;;
-    [6-9]) driveChunkSize="512M" ;;
-    5) driveChunkSize="256M" ;;
-    4) driveChunkSize="128M" ;;
-    3) driveChunkSize="64M" ;;
-    2) driveChunkSize="32M" ;;
-    [0-1]) driveChunkSize="8M" ;;
-    esac
 
     rcloneARGS=(
-        "--allow-other"
-        "--drive-chunk-size=$driveChunkSize"
+    #    "--allow-other"
         "--tpslimit=10"
         "--tpslimit-burst=10"
         "-P"
@@ -71,25 +79,25 @@ _Main() {
     _RcloneCacheMount() { # Expects to used with the "Cache" remote.
         rclonecacheARGS=(
             "--buffer-size=0M"
+			"--cache-remote=$REMOTE"
             "--cache-chunk-clean-interval=15m"
             "--cache-chunk-size=5M"
-            "--cache-db-purge"
+            "--cache-db-purge=true"
+			"--cache-tmp-upload-path=$HOME/.config/rclone/tmp_upload_cache-$TD/"
             "--cache-read-retries=10"
-            "--cache-tmp-upload-path=$TMPCACHE"
             "--cache-tmp-wait-time=15m"
-            "--cache-chunk-total-size=100G"
+            "--cache-chunk-total-size=500G"
             "--cache-workers=8"
             "--cache-writes"
             "--dir-cache-time=15m"
             "--drive-scope=drive"
-            "--drive-service-account-file=$SA"
-            "--drive-team-drive=$TD"
             "--vfs-cache-mode=writes"
             "--write-back-cache"
         )
-        until "$RCLONE" mount "$REMOTE" "$MPOINT" "${rcloneARGS[@]}" "${rclonecacheARGS[@]}" "$@"; do
+        until "$RCLONEBINARY" mount ":cache:" "$MPOINT" "${rcloneARGS[@]}" "${rclonecacheARGS[@]}" "$@"; do
             _MountPoint
             _unmount
+			clear
             echo "rclone mount for $MPOINT crashed with exit code $?.  Respawning.."
             sleep 2
         done
@@ -99,6 +107,7 @@ _Main() {
         until "$RCLONE" mount "$REMOTE" "$MPOINT" "${rcloneARGS[@]}"; do
             _MountPoint
             _unmount
+			clear
             echo "rclone mount for $MPOINT crashed with exit code $?.  Respawning.."
             sleep 2
         done
@@ -121,15 +130,16 @@ _Main() {
     ##############################################################################
 
     _hlp() {
+    ECHO="echo -e"
         $ECHO ""
         $ECHO "Usage: rclone_mount.sh <option(s)>"
         $ECHO ""
         $ECHO "Available options:"
-        $ECHO "-c, --cache    : Mount rclone remote with cacheing parameters"
-        $ECHO "-h, --help     : This help page."
-        $ECHO "-i, --install	: Installs rclone via linuxbrew"
-        $ECHO "-m, --mount    : Mount your rclone remote"
-        $ECHO "-p, --purge    : Will purge your rclone cache and mount."
+        $ECHO "-c, --cache      : Mount rclone remote with cacheing parameters"
+        $ECHO "-h, --help       : This help page."
+        $ECHO "-i, --install    : Installs rclone via linuxbrew"
+        $ECHO "-m, --mount      : Mount your rclone remote"
+        $ECHO "-p, --purge      : Will purge your rclone cache and mount."
         $ECHO ""
     }
 
@@ -145,6 +155,13 @@ _Main() {
             _unmount
             ;;
         -c | --cache)
+			export RCLONEBINARY="$RCLONE"
+		    export RCLONE_DRIVE_SERVICE_ACCOUNT_FILE=$(find "$SAKEYS" -name "*.json" |sort -R |tail -1)
+            _RcloneCacheMount
+            ;;
+		-f | --fcache)
+		    export RCLONEBINARY="$FRCLONE"
+		    export RCLONE_DRIVE_SERVICE_ACCOUNT_FOLDER="$SAKEYS"
             _RcloneCacheMount
             ;;
         -i | --install)
