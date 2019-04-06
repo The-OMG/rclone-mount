@@ -25,13 +25,8 @@ _Main() {
     REMOTE="drive:/Movies"                 
     MPOINT="$HOME/cloud/Movies/"            # Path to your mount folder.
 	
-	# Plex config
-	export RCLONE_CACHE_PLEX_USERNAME="omg"
-	export RCLONE_CACHE_PLEX_PASSWORD="L33tHax0r"
-	export RCLONE_CACHE_PLEX_URL="http://192.168.1.1:12005"
-		
-	# Calculate best chunksize for transfer speed.
-	  AvailableRam=$(free --giga -w | grep Mem | awk '{print $8}')     
+    # Calculate best chunksize for transfer speed.
+    AvailableRam=$(free --giga -w | grep Mem | awk '{print $8}')     
     case "$AvailableRam" in
     [1-9][0-9] | [1-9][0-9][0-9]) driveChunkSize="1G" ;;
     [6-9]) driveChunkSize="512M" ;;
