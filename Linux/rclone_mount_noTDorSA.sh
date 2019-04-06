@@ -26,7 +26,7 @@ _Main() {
     MPOINT="$HOME/cloud/Movies/"            # Path to your mount folder.
 	
     # Calculate best chunksize for transfer speed.
-    AvailableRam=$(free --giga -w | grep Mem | awk '{print $8}')     
+	  AvailableRam=$(free --giga -w | grep Mem | awk '{print $8}')     
     case "$AvailableRam" in
     [1-9][0-9] | [1-9][0-9][0-9]) driveChunkSize="1G" ;;
     [6-9]) driveChunkSize="512M" ;;
@@ -61,7 +61,7 @@ _Main() {
     }
 
     rcloneARGS=(
-        "--allow-other"
+    #    "--allow-other"
         "--tpslimit=10"
         "--tpslimit-burst=10"
         "-P"
@@ -148,6 +148,11 @@ _Main() {
             ;;
         -c | --cache)
 			export RCLONEBINARY="$RCLONE"
+            _RcloneCacheMount
+            ;;
+		-f | --fcache)
+		    export RCLONEBINARY="$FRCLONE"
+		    export RCLONE_DRIVE_SERVICE_ACCOUNT_FOLDER="$SAKEYS"
             _RcloneCacheMount
             ;;
         -i | --install)
